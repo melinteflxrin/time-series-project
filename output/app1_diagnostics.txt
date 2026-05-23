@@ -1,0 +1,2 @@
+Ljung-Box p-value (lag 12): 0.9995
+Jarque-Bera p-value: 0.0000
