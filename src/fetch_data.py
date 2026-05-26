@@ -7,15 +7,15 @@ import eurostat
 
 from config import (
     APP2_OUTPUT,
-    EXCHANGE_RATE_DATASET,
-    EXCHANGE_RATE_FILTERS,
-    EXCHANGE_RATE_OUTPUT,
-    HICP_DATASET,
-    HICP_FILTERS,
-    HICP_OUTPUT,
-    SHORT_RATE_DATASET,
-    SHORT_RATE_FILTERS,
-    SHORT_RATE_OUTPUT,
+    HICP_MONTHLY_DATASET,
+    HICP_MONTHLY_FILTERS,
+    HICP_MONTHLY_OUTPUT,
+    SHORT_RATE_MONTHLY_DATASET,
+    SHORT_RATE_MONTHLY_FILTERS,
+    SHORT_RATE_MONTHLY_OUTPUT,
+    INDPROD_MONTHLY_DATASET,
+    INDPROD_MONTHLY_FILTERS,
+    INDPROD_MONTHLY_OUTPUT,
 )
 
 
@@ -23,6 +23,8 @@ def parse_eurostat_time(series: pd.Series) -> pd.DatetimeIndex:
     value = series.astype(str)
     if value.str.contains("M").any():
         return pd.to_datetime(value.str.replace("M", "-", regex=False), format="%Y-%m")
+    if value.str.match(r"^\d{4}$").all():
+        return pd.to_datetime(value, format="%Y")
     return pd.to_datetime(value, errors="coerce")
 
 
@@ -36,9 +38,13 @@ def apply_filters(df: pd.DataFrame, filters: Optional[Dict[str, str]]) -> pd.Dat
             if len(matches) == 1:
                 column = matches[0]
         if column is None:
-            print(f"Warning: filter key '{key}' not in columns, skipping.")
+            print(f"Warning: filter key '{key}' not found in columns, skipping.")
             continue
-        df = df[df[column] == target]
+        filtered = df[df[column] == target]
+        if filtered.empty:
+            print(f"Warning: filter '{key}={target}' returns empty dataframe, skipping.")
+            continue
+        df = filtered
     return df
 
 
@@ -46,7 +52,7 @@ def normalize_eurostat(df: pd.DataFrame) -> pd.DataFrame:
     if "time" in df.columns and "values" in df.columns:
         return df
 
-    time_columns = [col for col in df.columns if re.match(r"^\d{4}-\d{2}$", str(col))]
+    time_columns = [col for col in df.columns if re.match(r"^\d{4}(-\d{2})?$", str(col))]
     if time_columns:
         id_columns = [col for col in df.columns if col not in time_columns]
         df = df.melt(
@@ -67,7 +73,7 @@ def normalize_eurostat(df: pd.DataFrame) -> pd.DataFrame:
 
 def pick_most_complete_series(df: pd.DataFrame) -> pd.DataFrame:
     if "time" not in df.columns or "values" not in df.columns:
-        raise ValueError("Expected 'time' and 'values' columns in Eurostat data frame.")
+        raise ValueError("Expected 'time' and 'values' columns.")
 
     id_columns = [c for c in df.columns if c not in {"time", "values"}]
     if not id_columns:
@@ -83,7 +89,7 @@ def pick_most_complete_series(df: pd.DataFrame) -> pd.DataFrame:
 def load_series(dataset: str, filters: Optional[Dict[str, str]], output_path: str) -> pd.DataFrame:
     print(f"Downloading {dataset}...")
     df = eurostat.get_data_df(dataset)
-    print(f"Columns for {dataset}: {list(df.columns)}")
+    print(f"  Columns: {list(df.columns)}")
 
     df = apply_filters(df, filters)
     df = normalize_eurostat(df)
@@ -96,23 +102,24 @@ def load_series(dataset: str, filters: Optional[Dict[str, str]], output_path: st
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     df.to_csv(output_path, index=False)
-    print(f"Saved {output_path} with {len(df)} rows.")
+    print(f"  Saved {output_path} ({len(df)} rows, {df['time'].min().date()} – {df['time'].max().date()})")
     return df
 
 
 def main() -> None:
-    eur_ron = load_series(EXCHANGE_RATE_DATASET, EXCHANGE_RATE_FILTERS, EXCHANGE_RATE_OUTPUT)
-    hicp = load_series(HICP_DATASET, HICP_FILTERS, HICP_OUTPUT)
-    rate = load_series(SHORT_RATE_DATASET, SHORT_RATE_FILTERS, SHORT_RATE_OUTPUT)
+    hicp = load_series(HICP_MONTHLY_DATASET, HICP_MONTHLY_FILTERS, HICP_MONTHLY_OUTPUT)
+    rate = load_series(SHORT_RATE_MONTHLY_DATASET, SHORT_RATE_MONTHLY_FILTERS, SHORT_RATE_MONTHLY_OUTPUT)
+    indprod = load_series(INDPROD_MONTHLY_DATASET, INDPROD_MONTHLY_FILTERS, INDPROD_MONTHLY_OUTPUT)
 
     merged = (
-        eur_ron.rename(columns={"values": "eur_ron"})
-        .merge(hicp.rename(columns={"values": "hicp"}), on="time", how="inner")
+        hicp.rename(columns={"values": "hicp"})
         .merge(rate.rename(columns={"values": "short_rate"}), on="time", how="inner")
+        .merge(indprod.rename(columns={"values": "indprod"}), on="time", how="inner")
     )
+    merged = merged.dropna()
 
     merged.to_csv(APP2_OUTPUT, index=False)
-    print(f"Saved {APP2_OUTPUT} with {len(merged)} rows.")
+    print(f"\nSaved {APP2_OUTPUT} ({len(merged)} rows, {merged['time'].min().date()} – {merged['time'].max().date()})")
 
 
 if __name__ == "__main__":

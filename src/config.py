@@ -1,22 +1,16 @@
-EXCHANGE_RATE_DATASET = "ert_bil_eur_m"
-EXCHANGE_RATE_FILTERS = {
-    "geo": "RO",
-    "currency": "RON",
-}
-EXCHANGE_RATE_OUTPUT = "data/eur_ron_monthly.csv"
+# Application 1 – Romania HICP (Consumer Price Index) monthly, all items, index 2015=100
+HICP_MONTHLY_DATASET = "prc_hicp_midx"
+HICP_MONTHLY_FILTERS = {"geo": "RO", "coicop": "CP00", "unit": "I15"}
+HICP_MONTHLY_OUTPUT = "../data/hicp_ro_monthly.csv"
 
-HICP_DATASET = "prc_hicp_midx"
-HICP_FILTERS = {
-    "geo": "RO",
-    "coicop": "CP00",
-    "unit": "I15",
-}
-HICP_OUTPUT = "data/hicp_ro.csv"
+# Application 2 – Romania short-term money-market interest rate, monthly
+SHORT_RATE_MONTHLY_DATASET = "irt_st_m"
+SHORT_RATE_MONTHLY_FILTERS = {"geo": "RO"}
+SHORT_RATE_MONTHLY_OUTPUT = "../data/short_rate_ro_monthly.csv"
 
-SHORT_RATE_DATASET = "irt_st_m"
-SHORT_RATE_FILTERS = {
-    "geo": "RO",
-}
-SHORT_RATE_OUTPUT = "data/short_rate_ro.csv"
+# Application 2 – Romania industrial production index, manufacturing, seasonally & calendar adjusted
+INDPROD_MONTHLY_DATASET = "sts_inpr_m"
+INDPROD_MONTHLY_FILTERS = {"geo": "RO", "s_adj": "SCA", "nace_r2": "C", "unit": "I15"}
+INDPROD_MONTHLY_OUTPUT = "../data/indprod_ro_monthly.csv"
 
-APP2_OUTPUT = "data/app2_monthly.csv"
+APP2_OUTPUT = "../data/app2_monthly.csv"

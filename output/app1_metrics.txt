@@ -1,3 +1,8 @@
-MAE: 0.0336
-RMSE: 0.0386
-MAPE: 0.66%
+Forecast horizon: 12 months
+MAE:  1.2586
+RMSE: 1.6083
+MAPE: 0.79%
+
+Stationary series (d=1, D=1) forecast:
+MAE:  0.004325
+RMSE: 0.006246

@@ -1,0 +1,23 @@
+ADF Unit Root Tests
+--------------------------------------------------
+  hicp          level p=0.9061  Δ1 p=0.0001  → I(1)
+  short_rate    level p=0.0000  Δ1 p=0.0172  → I(0)
+  indprod       level p=0.6332  Δ1 p=0.0000  → I(1)
+
+Johansen Cointegration Test (trace, 5%)
+--------------------------------------------------
+  Lag order (AIC): 6
+  H0: rank <= 0   trace=42.661  cv=29.796  reject
+  H0: rank <= 1   trace=9.462  cv=15.494  fail to reject
+  H0: rank <= 2   trace=2.832  cv=3.841  fail to reject
+
+  Cointegration rank: 1
+
+Granger Causality Tests on first differences (min p-value across lags 1–6)
+--------------------------------------------------
+  ** short_rate → hicp:  min p = 0.0389
+     indprod → hicp:  min p = 0.6101
+     hicp → short_rate:  min p = 0.4524
+     indprod → short_rate:  min p = 0.7060
+     hicp → indprod:  min p = 0.3922
+     short_rate → indprod:  min p = 0.5017
